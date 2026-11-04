@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Enum\Difficulty;
 use App\Repository\RecipeRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -33,6 +35,14 @@ class Recipe
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
+    /**
+     * Owning side of the relation: Doctrine creates the recipe_tag join table from this mapping.
+     *
+     * @var Collection<int, Tag>
+     */
+    #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'recipes')]
+    private Collection $tags;
+
     public function __construct(string $title, string $description, int $prepTimeMinutes, Difficulty $difficulty)
     {
         $this->title = $title;
@@ -40,6 +50,7 @@ class Recipe
         $this->prepTimeMinutes = $prepTimeMinutes;
         $this->difficulty = $difficulty;
         $this->createdAt = new \DateTimeImmutable();
+        $this->tags = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -110,5 +121,29 @@ class Recipe
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    /**
+     * @return Collection<int, Tag>
+     */
+    public function getTags(): Collection
+    {
+        return $this->tags;
+    }
+
+    public function addTag(Tag $tag): static
+    {
+        if (!$this->tags->contains($tag)) {
+            $this->tags->add($tag);
+        }
+
+        return $this;
+    }
+
+    public function removeTag(Tag $tag): static
+    {
+        $this->tags->removeElement($tag);
+
+        return $this;
     }
 }

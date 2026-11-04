@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recipe Directory{% endblock %}
+
+{% block stylesheets %}
+<style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #faf8f5; color: #222; }
+    main { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+    a { color: #b34700; text-decoration: none; }
+    .filters a, .pager a, .pager span { display: inline-block; padding: 4px 10px; margin: 2px; border: 1px solid #ddd; border-radius: 14px; background: #fff; }
+    .filters a.active, .pager span.current { background: #b34700; border-color: #b34700; color: #fff; }
+    .count { color: #666; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid #e5e0d8; border-radius: 10px; overflow: hidden; }
+    .photo { height: 140px; background: #ece6dc; display: flex; align-items: center; justify-content: center; color: #998; }
+    .photo img { width: 100%; height: 100%; object-fit: cover; }
+    .card-body { padding: 12px 14px; }
+    .card h2 { font-size: 18px; margin: 0 0 6px; }
+    .meta { color: #666; margin: 0 0 8px; font-size: 14px; }
+    .card-tags a { font-size: 12px; margin-right: 6px; }
+    .pager { margin-top: 24px; text-align: center; }
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+    <h1>Recipe Directory</h1>
+
+    <nav class="filters">
+        <a href="{{ path('recipe_index') }}" class="{{ currentTag is null ? 'active' : '' }}">All</a>
+        {% for tag in tags %}
+            <a href="{{ path('recipe_index', {tag: tag.id}) }}"
+               class="{{ currentTag is not null and currentTag.id == tag.id ? 'active' : '' }}">{{ tag.name }}</a>
+        {% endfor %}
+    </nav>
+
+    <p class="count">{{ total }} recipes · page {{ page }} of {{ pages }}</p>
+
+    <div class="grid">
+        {% for recipe in recipes %}
+            <article class="card">
+                <div class="photo">
+                    {% if recipe.imageFilename %}
+                        <img src="/uploads/{{ recipe.imageFilename }}" alt="{{ recipe.title }}">
+                    {% else %}
+                        No photo
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h2>{{ recipe.title }}</h2>
+                    <p class="meta">{{ recipe.prepTimeMinutes }} min · {{ recipe.difficulty.value|capitalize }}</p>
+                    <div class="card-tags">
+                        {% for tag in recipe.tags %}
+                            <a href="{{ path('recipe_index', {tag: tag.id}) }}">#{{ tag.name }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </article>
+        {% else %}
+            <p>No recipes found.</p>
+        {% endfor %}
+    </div>
+
+    {% if pages > 1 %}
+        {% set tagId = currentTag is not null ? currentTag.id : null %}
+        <nav class="pager">
+            {% if page > 1 %}
+                <a href="{{ path('recipe_index', {page: page - 1, tag: tagId}) }}">« Prev</a>
+            {% endif %}
+            {% for p in 1..pages %}
+                {% if p == page %}
+                    <span class="current">{{ p }}</span>
+                {% else %}
+                    <a href="{{ path('recipe_index', {page: p, tag: tagId}) }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page < pages %}
+                <a href="{{ path('recipe_index', {page: page + 1, tag: tagId}) }}">Next »</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+</main>
+{% endblock %}

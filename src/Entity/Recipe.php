@@ -43,13 +43,18 @@ class Recipe
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'recipes')]
     private Collection $tags;
 
-    public function __construct(string $title, string $description, int $prepTimeMinutes, Difficulty $difficulty)
-    {
+    public function __construct(
+        string $title,
+        string $description,
+        int $prepTimeMinutes,
+        Difficulty $difficulty,
+        ?\DateTimeImmutable $createdAt = null,
+    ) {
         $this->title = $title;
         $this->description = $description;
         $this->prepTimeMinutes = $prepTimeMinutes;
         $this->difficulty = $difficulty;
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = $createdAt ?? new \DateTimeImmutable();
         $this->tags = new ArrayCollection();
     }
 

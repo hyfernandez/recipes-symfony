@@ -42,6 +42,15 @@ class Recipe
     private \DateTimeImmutable $createdAt;
 
     /**
+     * Who owns the recipe; RecipeVoter allows editing and deleting only to this user.
+     * Nullable + SET NULL so recipes created before this field existed (or whose
+     * author is deleted) stay valid, but nobody can edit them.
+     */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    private ?User $author = null;
+
+    /**
      * Owning side of the relation: Doctrine creates the recipe_tag join table from this mapping.
      *
      * @var Collection<int, Tag>
@@ -132,6 +141,18 @@ class Recipe
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getAuthor(): ?User
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?User $author): static
+    {
+        $this->author = $author;
+
+        return $this;
     }
 
     /**

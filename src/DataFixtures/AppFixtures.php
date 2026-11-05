@@ -22,6 +22,9 @@ class AppFixtures extends Fixture
     // Development-only credentials for the admin area.
     private const ADMIN_EMAIL = 'admin@example.com';
     private const ADMIN_PASSWORD = 'admin1234';
+    // A second admin, to demonstrate that RecipeVoter lets only the author edit a recipe.
+    private const EDITOR_EMAIL = 'editor@example.com';
+    private const EDITOR_PASSWORD = 'editor1234';
 
     // The password hasher is injected by the service container (autowiring).
     public function __construct(private UserPasswordHasherInterface $passwordHasher)
@@ -34,6 +37,11 @@ class AppFixtures extends Fixture
         $admin->setRoles(['ROLE_ADMIN']);
         $admin->setPassword($this->passwordHasher->hashPassword($admin, self::ADMIN_PASSWORD));
         $manager->persist($admin);
+
+        $editor = new User(self::EDITOR_EMAIL);
+        $editor->setRoles(['ROLE_ADMIN']);
+        $editor->setPassword($this->passwordHasher->hashPassword($editor, self::EDITOR_PASSWORD));
+        $manager->persist($editor);
 
         $faker = Factory::create();
         $faker->seed(1234); // same seed => same data on every load
@@ -53,6 +61,9 @@ class AppFixtures extends Fixture
                 $faker->randomElement(Difficulty::cases()),
                 \DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-60 days', 'now')),
             );
+
+            // $i % 2 instead of the faker: an extra faker call would change all the data generated after it.
+            $recipe->setAuthor(0 === $i % 2 ? $admin : $editor);
 
             foreach ($faker->randomElements($tags, $faker->numberBetween(1, 3)) as $tag) {
                 $recipe->addTag($tag);

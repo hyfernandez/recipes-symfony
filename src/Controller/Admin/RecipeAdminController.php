@@ -6,6 +6,7 @@ use App\Entity\Recipe;
 use App\Enum\Difficulty;
 use App\Form\RecipeType;
 use App\Repository\RecipeRepository;
+use App\Security\RecipeVoter;
 use App\Service\ImageUploader;
 use App\Service\InvalidImageException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -15,6 +16,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 // The whole /admin prefix requires ROLE_ADMIN (access_control in security.yaml).
 #[Route('/admin/recipes')]
@@ -32,6 +34,7 @@ class RecipeAdminController extends AbstractController
     public function new(Request $request, EntityManagerInterface $em, ImageUploader $uploader): Response
     {
         $recipe = new Recipe('', '', 30, Difficulty::Easy);
+        $recipe->setAuthor($this->getUser());   // the voter will let only this user edit/delete it
         $form = $this->createForm(RecipeType::class, $recipe);
         $form->handleRequest($request);
 
@@ -51,6 +54,7 @@ class RecipeAdminController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_recipe_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[IsGranted(RecipeVoter::EDIT, subject: 'recipe')]
     public function edit(Recipe $recipe, Request $request, EntityManagerInterface $em, ImageUploader $uploader): Response
     {
         $oldImage = $recipe->getImageFilename();
@@ -78,6 +82,7 @@ class RecipeAdminController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'admin_recipe_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted(RecipeVoter::DELETE, subject: 'recipe')]
     public function delete(Recipe $recipe, Request $request, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete-recipe-'.$recipe->getId(), (string) $request->request->get('_token'))) {

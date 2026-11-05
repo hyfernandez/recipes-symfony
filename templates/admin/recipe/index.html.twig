@@ -10,7 +10,7 @@
 
     <table>
         <thead>
-            <tr><th>#</th><th>Title</th><th>Time</th><th>Difficulty</th><th>Tags</th><th></th></tr>
+            <tr><th>#</th><th>Title</th><th>Time</th><th>Difficulty</th><th>Tags</th><th>Author</th><th></th></tr>
         </thead>
         <tbody>
         {% for recipe in recipes %}
@@ -20,17 +20,23 @@
                 <td>{{ recipe.prepTimeMinutes }} min</td>
                 <td>{{ recipe.difficulty.value|capitalize }}</td>
                 <td>{{ recipe.tags|map(t => t.name)|join(', ') }}</td>
+                <td>{{ recipe.author ? recipe.author.email : '—' }}</td>
                 <td>
-                    <a href="{{ path('admin_recipe_edit', {id: recipe.id}) }}">Edit</a>
-                    <form class="inline" method="post" action="{{ path('admin_recipe_delete', {id: recipe.id}) }}"
-                          onsubmit="return confirm('Delete this recipe?');">
-                        <input type="hidden" name="_token" value="{{ csrf_token('delete-recipe-' ~ recipe.id) }}">
-                        <button type="submit" class="btn btn-link">Delete</button>
-                    </form>
+                    {# Hide what the voter would deny; the controller still enforces it (403). #}
+                    {% if is_granted('RECIPE_EDIT', recipe) %}
+                        <a href="{{ path('admin_recipe_edit', {id: recipe.id}) }}">Edit</a>
+                    {% endif %}
+                    {% if is_granted('RECIPE_DELETE', recipe) %}
+                        <form class="inline" method="post" action="{{ path('admin_recipe_delete', {id: recipe.id}) }}"
+                              onsubmit="return confirm('Delete this recipe?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete-recipe-' ~ recipe.id) }}">
+                            <button type="submit" class="btn btn-link">Delete</button>
+                        </form>
+                    {% endif %}
                 </td>
             </tr>
         {% else %}
-            <tr><td colspan="6">No recipes yet.</td></tr>
+            <tr><td colspan="7">No recipes yet.</td></tr>
         {% endfor %}
         </tbody>
     </table>

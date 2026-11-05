@@ -4,10 +4,12 @@ namespace App\DataFixtures;
 
 use App\Entity\Recipe;
 use App\Entity\Tag;
+use App\Entity\User;
 use App\Enum\Difficulty;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
@@ -17,8 +19,22 @@ class AppFixtures extends Fixture
 
     private const RECIPE_COUNT = 50;
 
+    // Development-only credentials for the admin area.
+    private const ADMIN_EMAIL = 'admin@example.com';
+    private const ADMIN_PASSWORD = 'admin1234';
+
+    // The password hasher is injected by the service container (autowiring).
+    public function __construct(private UserPasswordHasherInterface $passwordHasher)
+    {
+    }
+
     public function load(ObjectManager $manager): void
     {
+        $admin = new User(self::ADMIN_EMAIL);
+        $admin->setRoles(['ROLE_ADMIN']);
+        $admin->setPassword($this->passwordHasher->hashPassword($admin, self::ADMIN_PASSWORD));
+        $manager->persist($admin);
+
         $faker = Factory::create();
         $faker->seed(1234); // same seed => same data on every load
 

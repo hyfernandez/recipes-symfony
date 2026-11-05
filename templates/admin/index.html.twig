@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin{% endblock %}
+
+{% block stylesheets %}
+<style>
+    body { font-family: system-ui, sans-serif; background: #faf8f5; color: #222; }
+    main { max-width: 800px; margin: 40px auto; padding: 0 16px; }
+    a { color: #b34700; }
+</style>
+{% endblock %}
+
+{% block body %}
+<main>
+    <h1>Admin</h1>
+    <p>Logged in as <strong>{{ app.user.userIdentifier }}</strong>.</p>
+    <p>
+        <a href="{{ path('recipe_index') }}">View the catalog</a> ·
+        <a href="{{ path('app_logout') }}">Log out</a>
+    </p>
+</main>
+{% endblock %}

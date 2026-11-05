@@ -19,6 +19,22 @@ class RecipeRepository extends ServiceEntityRepository
     }
 
     /**
+     * All recipes, newest first, with their tags loaded in the same query (admin list).
+     *
+     * @return list<Recipe>
+     */
+    public function findAllWithTags(): array
+    {
+        return $this->createQueryBuilder('r')
+            ->leftJoin('r.tags', 't')
+            ->addSelect('t')
+            ->orderBy('r.createdAt', 'DESC')
+            ->addOrderBy('r.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Newest recipes first, one page at a time, optionally filtered by tag.
      *
      * @return Paginator<Recipe>

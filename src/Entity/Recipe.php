@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: RecipeRepository::class)]
 class Recipe
@@ -18,12 +19,17 @@ class Recipe
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     private string $title;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank]
     private string $description;
 
     #[ORM\Column]
+    #[Assert\Positive]
+    #[Assert\LessThanOrEqual(1440, message: 'The preparation time cannot exceed 24 hours (1440 minutes).')]
     private int $prepTimeMinutes;
 
     #[ORM\Column(enumType: Difficulty::class)]

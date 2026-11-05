@@ -1,0 +1,15 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ title }} · Admin{% endblock %}
+
+{% block content %}
+    <h1>{{ title }}</h1>
+
+    {{ form_start(form) }}
+        {{ form_widget(form) }}
+        <p>
+            <button type="submit" class="btn">Save</button>
+            <a href="{{ path('admin_recipe_index') }}">Cancel</a>
+        </p>
+    {{ form_end(form) }}
+{% endblock %}

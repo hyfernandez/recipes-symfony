@@ -1,0 +1,37 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Recipes · Admin{% endblock %}
+
+{% block content %}
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h1>Recipes ({{ recipes|length }})</h1>
+        <a class="btn" href="{{ path('admin_recipe_new') }}">+ New recipe</a>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>#</th><th>Title</th><th>Time</th><th>Difficulty</th><th>Tags</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for recipe in recipes %}
+            <tr>
+                <td>{{ recipe.id }}</td>
+                <td>{{ recipe.title }}</td>
+                <td>{{ recipe.prepTimeMinutes }} min</td>
+                <td>{{ recipe.difficulty.value|capitalize }}</td>
+                <td>{{ recipe.tags|map(t => t.name)|join(', ') }}</td>
+                <td>
+                    <a href="{{ path('admin_recipe_edit', {id: recipe.id}) }}">Edit</a>
+                    <form class="inline" method="post" action="{{ path('admin_recipe_delete', {id: recipe.id}) }}"
+                          onsubmit="return confirm('Delete this recipe?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete-recipe-' ~ recipe.id) }}">
+                        <button type="submit" class="btn btn-link">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6">No recipes yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -5,6 +5,10 @@
 {% block content %}
     <h1>{{ title }}</h1>
 
+    {% if recipe is defined and recipe.imageFilename %}
+        <p>Current photo:<br><img src="/uploads/{{ recipe.imageFilename }}" alt="{{ recipe.title }}" style="max-width:200px;"></p>
+    {% endif %}
+
     {{ form_start(form) }}
         {{ form_widget(form) }}
         <p>

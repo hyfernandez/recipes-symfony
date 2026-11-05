@@ -10,3 +10,8 @@
 ###< symfony/framework-bundle ###
 
 .idea/
+
+###> uploads ###
+/public/uploads/*
+!/public/uploads/.gitkeep
+###< uploads ###

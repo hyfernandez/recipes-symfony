@@ -7,6 +7,7 @@ use App\Entity\Tag;
 use App\Enum\Difficulty;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -29,6 +30,13 @@ class RecipeType extends AbstractType
                 'class' => Difficulty::class,
                 'choice_label' => fn (Difficulty $d) => ucfirst($d->value),
                 'placeholder' => false,
+            ])
+            // Not mapped: the controller hands the file to ImageUploader and stores only the filename.
+            ->add('imageFile', FileType::class, [
+                'label' => 'Photo (jpg, png or webp, max 2 MB)',
+                'mapped' => false,
+                'required' => false,
+                'attr' => ['accept' => 'image/jpeg,image/png,image/webp'],
             ])
             ->add('tags', EntityType::class, [
                 'class' => Tag::class,

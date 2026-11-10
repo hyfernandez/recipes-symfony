@@ -6,6 +6,7 @@ use App\Repository\TagRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: TagRepository::class)]
 class Tag
@@ -13,9 +14,11 @@ class Tag
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['recipe:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['recipe:read'])]
     private string $name;
 
     /**

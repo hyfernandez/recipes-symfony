@@ -15,6 +15,17 @@ security:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler(/|$)|(_wdt|assets|build)/)
             security: false
+        # JSON API: login with a JSON body, same session as the admin area (context: main).
+        # Without an entry point an anonymous request to a protected URL gets a 401, not a redirect.
+        api:
+            pattern: ^/api
+            lazy: true
+            provider: app_user_provider
+            context: main
+            json_login:
+                check_path: api_login
+                username_path: email
+                password_path: password
         main:
             lazy: true
             provider: app_user_provider
@@ -27,6 +38,8 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api, methods: [POST, PUT, PATCH, DELETE], roles: ROLE_ADMIN }   # reading is public
         - { path: ^/admin, roles: ROLE_ADMIN }
 
 when@test:

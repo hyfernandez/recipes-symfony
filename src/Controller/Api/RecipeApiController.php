@@ -7,9 +7,13 @@ use App\Entity\Recipe;
 use App\Repository\RecipeRepository;
 use App\Repository\TagRepository;
 use App\Security\RecipeVoter;
+use App\Service\ImageUploader;
+use App\Service\InvalidImageException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -108,6 +112,49 @@ final class RecipeApiController extends AbstractController
         return $this->json($recipe, context: self::READ);
     }
 
+    /**
+     * Sets or replaces the photo. multipart/form-data with the file in the "image" field.
+     * It is a separate call from create/update because a file does not travel in the JSON body.
+     */
+    #[Route('/{id}/image', name: 'api_recipe_image', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted(RecipeVoter::EDIT, subject: 'recipe')]
+    public function uploadImage(
+        Recipe $recipe,
+        Request $request,
+        ImageUploader $uploader,
+        EntityManagerInterface $em,
+    ): JsonResponse {
+        $file = $request->files->get('image');
+        if (!$file instanceof UploadedFile) {
+            throw $this->validationError($recipe, 'image', 'Send the photo in the "image" field (multipart/form-data).');
+        }
+
+        try {
+            $newImage = $uploader->upload($file);
+        } catch (InvalidImageException $e) {
+            throw $this->validationError($recipe, 'image', $e->getMessage());
+        }
+
+        $oldImage = $recipe->getImageFilename();
+        $recipe->setImageFilename($newImage);
+
+        try {
+            $em->flush();
+        } catch (\Throwable $e) {
+            // The UPDATE failed: the new file would be orphaned and the recipe still points to the old one.
+            $uploader->delete($newImage);
+
+            throw $e;
+        }
+
+        // Only after a successful flush: if the UPDATE fails, the old photo must stay.
+        if ($oldImage !== null) {
+            $uploader->delete($oldImage);
+        }
+
+        return $this->json($recipe, context: self::READ);
+    }
+
     #[Route('/{id}', name: 'api_recipe_delete', requirements: ['id' => '\d+'], methods: ['DELETE'])]
     #[IsGranted(RecipeVoter::DELETE, subject: 'recipe')]
     public function delete(Recipe $recipe, EntityManagerInterface $em): Response
@@ -116,6 +163,17 @@ final class RecipeApiController extends AbstractController
         $em->flush();
 
         return new Response(status: Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * A 422 in the same format as the validation errors of #[MapRequestPayload], so the client
+     * handles every error of the API with one piece of code.
+     */
+    private function validationError(object $root, string $field, string $message, mixed $invalidValue = null): HttpException
+    {
+        $violations = new ConstraintViolationList([new ConstraintViolation($message, null, [], $root, $field, $invalidValue)]);
+
+        return new HttpException(Response::HTTP_UNPROCESSABLE_ENTITY, $message, new ValidationFailedException($root, $violations));
     }
 
     /**
@@ -129,12 +187,8 @@ final class RecipeApiController extends AbstractController
 
         if (count($found) !== count($ids)) {
             $unknown = array_diff($ids, array_map(static fn ($t) => $t->getId(), $found));
-            $violations = new ConstraintViolationList([new ConstraintViolation(
-                sprintf('Unknown tag id(s): %s.', implode(', ', $unknown)),
-                null, [], $input, 'tags', $input->tags,
-            )]);
 
-            throw new HttpException(Response::HTTP_UNPROCESSABLE_ENTITY, 'Unknown tag.', new ValidationFailedException($input, $violations));
+            throw $this->validationError($input, 'tags', sprintf('Unknown tag id(s): %s.', implode(', ', $unknown)), $input->tags);
         }
 
         foreach ($recipe->getTags()->toArray() as $current) {

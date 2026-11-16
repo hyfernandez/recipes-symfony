@@ -26,4 +26,19 @@ final class ApiLoginController extends AbstractController
 
         return $this->json(['email' => $user->getEmail(), 'roles' => $user->getRoles()]);
     }
+
+    #[Route('/api/me', name: 'api_me', methods: ['GET'], defaults: ['_format' => 'json'])]
+    public function me(#[CurrentUser] ?User $user): JsonResponse
+    {
+        if ($user === null) {
+            return $this->json(['error' => 'Not authenticated.'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return $this->json(['email' => $user->getEmail(), 'roles' => $user->getRoles()]);
+    }
+
+    #[Route('/api/logout', name: 'api_logout', methods: ['POST'], defaults: ['_format' => 'json'])]
+    public function logout() : JsonResponse {
+        throw new \LogicException('This method is intercepted by the logout key of the firewall.');
+    }
 }
